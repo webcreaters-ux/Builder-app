@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { getAICodeSuggestion, explainCode, fixCode } from '@/lib/openrouter';
-import { Sparkles, Send, Loader2, X } from 'lucide-react';
+import { Sparkles, Send, Loader2, X, Wand2, Bug, FlaskConical, RefreshCw } from 'lucide-react';
 
 export function AIAssistant() {
   const { activeFile, fileContents, updateFileContent, openRouterApiKey, isAIAssisting, setIsAIAssisting } = useAppStore();
@@ -71,6 +71,75 @@ export function AIAssistant() {
     }
   };
 
+  const handleRefactor = async () => {
+    if (!openRouterApiKey || !activeFile) return;
+
+    setIsLoading(true);
+    setError('');
+    setResponse('');
+
+    try {
+      const language = activeFile.split('.').pop() || 'javascript';
+      const aiResponse = await getAICodeSuggestion(
+        openRouterApiKey,
+        currentContent,
+        'Refactor this code for clarity, performance, and best practices. Return only code.',
+        language
+      );
+      setResponse(aiResponse);
+    } catch (err: any) {
+      setError(err.message || 'Failed to refactor code');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDebug = async () => {
+    if (!openRouterApiKey || !activeFile) return;
+
+    setIsLoading(true);
+    setError('');
+    setResponse('');
+
+    try {
+      const language = activeFile.split('.').pop() || 'javascript';
+      const aiResponse = await fixCode(
+        openRouterApiKey,
+        currentContent,
+        'Analyze the code for potential issues and return a corrected version with brief comments in code where fixes are applied.',
+        language
+      );
+      setResponse(aiResponse);
+    } catch (err: any) {
+      setError(err.message || 'Failed to debug code');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGenerateTests = async () => {
+    if (!openRouterApiKey || !activeFile) return;
+
+    setIsLoading(true);
+    setError('');
+    setResponse('');
+
+    try {
+      const language = activeFile.split('.').pop() || 'javascript';
+      const aiResponse = await getAICodeSuggestion(
+        openRouterApiKey,
+        currentContent,
+        'Generate a minimal but solid test suite for this code. Return only test code.',
+        language
+      );
+      setResponse(aiResponse);
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate tests');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleApplyCode = () => {
     if (!activeFile || !response) return;
 
@@ -115,19 +184,54 @@ export function AIAssistant() {
           >
             Explain Current Code
           </button>
+          <button
+            onClick={handleRefactor}
+            disabled={!openRouterApiKey || !activeFile || isLoading}
+            className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+          >
+            <Wand2 className="w-4 h-4" /> Refactor
+          </button>
+          <button
+            onClick={handleDebug}
+            disabled={!openRouterApiKey || !activeFile || isLoading}
+            className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+          >
+            <Bug className="w-4 h-4" /> Debug
+          </button>
+          <button
+            onClick={handleGenerateTests}
+            disabled={!openRouterApiKey || !activeFile || isLoading}
+            className="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-2"
+          >
+            <FlaskConical className="w-4 h-4" /> Generate Tests
+          </button>
         </div>
 
         {response && (
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
             <div className="text-sm whitespace-pre-wrap">{response}</div>
-            {response.includes('```') && (
+            <div className="flex gap-2">
+              {response.includes('```') && (
+                <button
+                  onClick={handleApplyCode}
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                >
+                  Apply Code
+                </button>
+              )}
               <button
-                onClick={handleApplyCode}
-                className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm"
+                onClick={() => navigator.clipboard.writeText(response)}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
               >
-                Apply Code
+                Copy
               </button>
-            )}
+              <button
+                onClick={() => setResponse('')}
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
+              >
+                Clear
+              </button>
+            </div>
           </div>
         )}
 
@@ -154,7 +258,7 @@ export function AIAssistant() {
             className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <RefreshCw className="w-5 h-5 animate-spin" />
             ) : (
               <Send className="w-5 h-5" />
             )}

@@ -5,7 +5,7 @@ import { FileNode, useAppStore } from '@/lib/store';
 import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Plus, Trash2 } from 'lucide-react';
 
 export function FileExplorer() {
-  const { files, activeFile, setActiveFile, addFile, deleteFile } = useAppStore();
+  const { files, activeFile, openFile, addFile, deleteFile } = useAppStore();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['src']));
 
   const toggleFolder = (path: string) => {
@@ -49,7 +49,7 @@ export function FileExplorer() {
             if (node.type === 'folder') {
               toggleFolder(node.path);
             } else {
-              setActiveFile(node.path);
+              openFile(node.path);
             }
           }}
         >
